@@ -1,10 +1,16 @@
+# Group:
+# Rodolfo Gonzalez
+# Hector Moreno
+
 import sqlite3
 import csv
 
+##### MAKE SURE YOU HAVE CSV FILES IN A ./Data DIRECTORY #####
 conn = sqlite3.connect("robot.db")
 cursor = conn.cursor()
 
 # Robots Table
+print("Task 2")
 exist = cursor.execute(
     "SELECT name FROM sqlite_master WHERE type='table' AND name='Robots'"
 ).fetchone()
@@ -113,7 +119,7 @@ else:
 
 ### TASK 3 ###
 # 1. A table consists of the names of robots and the maximal x-axis, minimum x-axis reached by this robot.
-print("\n\n3.1")
+print("\n\nTask 3.1")
 statement = """SELECT name, MAX(x_axis), MIN(x_axis)
 FROM Robots NATURAL JOIN Coordinates
 GROUP BY name;"""
@@ -130,7 +136,7 @@ for x in res:
     print(x)
 
 # 2. A table consists of the names of robots and the maximal y-axis, minimum y-axis reached by this robot
-print("\n\n3.2")
+print("\n\nTask 3.2")
 statement = """SELECT name, MAX(y_axis), MIN(y_axis)
 FROM Robots NATURAL JOIN Coordinates
 GROUP BY name;"""
@@ -145,6 +151,58 @@ print(relational_schema)
 print("-------------------------------------")
 for x in res:
     print(x)
+
+
+### TASK 4 ###
+
+# 1.Regions where Astro and IamHuman are close (within 1 cm)
+print("\n\nTask 4.1")
+statement = """
+SELECT
+    MIN(MIN(c1.x_axis),MIN(c2.x_axis)) AS x_min,
+    MAX(MAX(c1.x_axis),MAX(c2.x_axis)) AS x_max,
+    MIN(MIN(c1.y_axis),MIN(c2.y_axis)) AS y_min,
+    MAX(MAX(c1.y_axis),MAX(c2.y_axis)) AS y_max
+FROM Coordinates c1
+JOIN Coordinates c2 ON c1.timestamp = c2.timestamp
+WHERE c1.Rid = (SELECT Rid FROM Robots WHERE name = 'Astro')
+  AND c2.Rid = (SELECT Rid FROM Robots WHERE name = 'IamHuman')
+  AND ABS(c1.x_axis - c2.x_axis) < 1
+  AND ABS(c1.y_axis - c2.y_axis) < 1;
+"""
+# ABS (absoulte value) The difference between their x positions is less than 1 cm in either direction (positive or negative), and same for y.
+
+cursor.execute(statement)
+res = cursor.fetchall()
+
+relational_schema = [description[0] for description in cursor.description]
+print(relational_schema)
+print("-------------------------------------")
+for row in res:
+    print(row)
+
+
+# 2. Total seconds Astro and IamHuman are close (within 1 cm)
+print("\n\nTask 4.2")
+statement = """
+SELECT COUNT(*) AS seconds_close
+FROM Coordinates c1
+JOIN Coordinates c2 ON c1.timestamp = c2.timestamp
+WHERE c1.Rid = (SELECT Rid FROM Robots WHERE name = 'Astro')
+  AND c2.Rid = (SELECT Rid FROM Robots WHERE name = 'IamHuman')
+  AND ABS(c1.x_axis - c2.x_axis) < 1
+  AND ABS(c1.y_axis - c2.y_axis) < 1;
+"""
+# ABS (absoulte value)
+
+cursor.execute(statement)
+res = cursor.fetchall()
+
+relational_schema = [description[0] for description in cursor.description]
+print(relational_schema)
+print("-------------------------------------")
+for row in res:
+    print(row)
 
 
 conn.close()
